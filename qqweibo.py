@@ -31,14 +31,14 @@ class APIError(StandardError):
     '''
     raise APIError if got failed json message.
     '''
-    def __init__(self, error_code, error, request):
+    def __init__(self, error_code, msg, request):
         self.error_code = error_code
-        self.error = error
+        self.msg = msg
         self.request = request
-        StandardError.__init__(self, error)
+        StandardError.__init__(self, msg)
 
     def __str__(self):
-        return 'APIError: %s: %s, request: %s' % (self.error_code, self.error, self.request)
+        return 'APIError: %s: %s, request: %s' % (self.error_code, self.msg, self.request)
 
 
 class JsonObject(dict):
@@ -133,12 +133,16 @@ def _http_call(api_url, method, client, **kw):
     req = urllib2.Request(http_url, data=http_body)
     if boundary:
         req.add_header('Content-Type', 'multipart/form-data; boundary=%s' % boundary)
-    resp = urllib2.urlopen(req)
-    body = resp.read()
+    try:
+        resp = urllib2.urlopen(req)
+        body = resp.read()
+    except HTTPError, e:
+        body = e.read()
+        
     try:
         r = json.loads(body, object_hook=_obj_hook)
-        if hasattr(r, 'error_code'):
-            raise APIError(r.error_code, getattr(r, 'error', ''), getattr(r, 'request', ''))
+        if hasattr(r, 'errcode'):
+            raise APIError(r.errcode, getattr(r, 'msg', ''), http_url)
     except ValueError:
         r = body
     return r
@@ -152,7 +156,7 @@ class HttpObject(object):
     def __getattr__(self, attr):
         def wrap(**kw):
             if self.client.is_expires():
-                raise APIError('21327', 'expired_token', attr)
+                raise APIError('10019', 'expired_token', attr)
             #return _http_call('%s%s.json' % (self.client.api_url, attr.replace('__', '/')), self.method, self.client.access_token, self.openid, **kw)
             return _http_call('%s%s' % (self.client.api_url, attr.replace('__', '/')), self.method, self.client, **kw)
         return wrap
@@ -188,19 +192,19 @@ class APIClient(object):
         '''
         redirect = redirect_uri if redirect_uri else self.redirect_uri
         if not redirect:
-            raise APIError('21305', 'Parameter absent: redirect_uri', 'OAuth2 request')
+            raise APIError('10013', 'Parameter absent: redirect_uri', 'OAuth2 request')
         return '%s%s?%s' % (self.auth_url, 'authorize', \
                 _encode_params(client_id = self.client_id, \
                         response_type = 'code', \
                         redirect_uri = redirect))
 
-    def request_access_token(self, code, redirect_uri=None):
+    def request_access_token(self, code, redirect_uri=None, ):
         '''
         return access token as object: {"access_token":"your-access-token","expires_in":12345678}, expires_in is standard unix-epoch-time
         '''
         redirect = redirect_uri if redirect_uri else self.redirect_uri
         if not redirect:
-            raise APIError('21305', 'Parameter absent: redirect_uri', 'OAuth2 request')
+            raise APIError('10013', 'Parameter absent: redirect_uri', 'OAuth2 request')
         body = _http_get('%s%s' % (self.auth_url, 'access_token'), \
                 client_id = self.client_id, \
                 client_secret = self.client_secret, \
