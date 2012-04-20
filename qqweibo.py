@@ -136,7 +136,7 @@ def _http_call(api_url, method, client, **kw):
     try:
         resp = urllib2.urlopen(req)
         body = resp.read()
-    except HTTPError, e:
+    except urllib2.HTTPError, e:
         body = e.read()
         
     try:
