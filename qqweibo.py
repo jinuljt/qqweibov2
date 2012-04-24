@@ -141,7 +141,7 @@ def _http_call(api_url, method, client, **kw):
         
     try:
         r = json.loads(body, object_hook=_obj_hook)
-        if hasattr(r, 'errcode'):
+        if hasattr(r, 'errcode') and r.errcode != 0:
             raise APIError(r.errcode, getattr(r, 'msg', ''), http_url)
     except ValueError:
         r = body
