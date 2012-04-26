@@ -118,7 +118,8 @@ def _http_call(api_url, method, client, **kw):
         params, boundary = _encode_multipart(**kw)
     else:
         params = _encode_params(**kw)
-        
+
+    print client
     if client:
         auth_params = _encode_params(
             oauth_consumer_key=client.client_id,
@@ -128,10 +129,8 @@ def _http_call(api_url, method, client, **kw):
             scope="all"
             )
         http_url = '%s?%s' % (api_url, auth_params)
-    http_url = '%s&%s' % (api_url, params) if method==_HTTP_GET else http_url
+    http_url = '%s&%s' % (http_url, params) if method==_HTTP_GET else http_url
     http_body = None if method==_HTTP_GET else params
-    print http_url
-    print http_body
     req = urllib2.Request(http_url, data=http_body)
     if boundary:
         req.add_header('Content-Type', 'multipart/form-data; boundary=%s' % boundary)
