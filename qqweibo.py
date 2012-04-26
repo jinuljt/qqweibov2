@@ -119,7 +119,6 @@ def _http_call(api_url, method, client, **kw):
     else:
         params = _encode_params(**kw)
 
-    print client
     if client:
         auth_params = _encode_params(
             oauth_consumer_key=client.client_id,
@@ -128,8 +127,8 @@ def _http_call(api_url, method, client, **kw):
             oauth_version="2.a",
             scope="all"
             )
-        http_url = '%s?%s' % (api_url, auth_params)
-    http_url = '%s&%s' % (http_url, params) if method==_HTTP_GET else http_url
+        api_url = '%s?%s' % (api_url, auth_params)
+    http_url = '%s&%s' % (api_url, params) if method==_HTTP_GET else api_url
     http_body = None if method==_HTTP_GET else params
     req = urllib2.Request(http_url, data=http_body)
     if boundary:
