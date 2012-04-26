@@ -130,6 +130,8 @@ def _http_call(api_url, method, client, **kw):
         http_url = '%s?%s' % (api_url, auth_params)
     http_url = '%s&%s' % (api_url, params) if method==_HTTP_GET else http_url
     http_body = None if method==_HTTP_GET else params
+    print http_url
+    print http_body
     req = urllib2.Request(http_url, data=http_body)
     if boundary:
         req.add_header('Content-Type', 'multipart/form-data; boundary=%s' % boundary)
@@ -205,12 +207,12 @@ class APIClient(object):
         redirect = redirect_uri if redirect_uri else self.redirect_uri
         if not redirect:
             raise APIError('10013', 'Parameter absent: redirect_uri', 'OAuth2 request')
-        body = _http_get('%s%s' % (self.auth_url, 'access_token'), \
+        body = _http_get('%s%s?' % (self.auth_url, 'access_token'), \
                 client_id = self.client_id, \
                 client_secret = self.client_secret, \
                 redirect_uri = redirect, \
                 code = code, grant_type = 'authorization_code')
-
+        print body
         r = _obj_hook(dict([p.split('=') for p in body.split('&')]))
         r.expires_in = int(r.expires_in) + int(time.time())
         return r
