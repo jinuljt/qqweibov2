@@ -210,7 +210,6 @@ class APIClient(object):
                 client_secret = self.client_secret, \
                 redirect_uri = redirect, \
                 code = code, grant_type = 'authorization_code')
-        print body
         r = _obj_hook(dict([p.split('=') for p in body.split('&')]))
         r.expires_in = int(r.expires_in) + int(time.time())
         return r
