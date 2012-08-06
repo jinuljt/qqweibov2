@@ -214,6 +214,16 @@ class APIClient(object):
         r.expires_in = int(r.expires_in) + int(time.time())
         return r
 
+    def refresh_token(self, refresh_token):
+        body = _http_get('%s%s?' % (self.auth_url, 'access_token'), \
+                client_id = self.client_id, \
+                client_secret = self.client_secret, \
+                refresh_token = refresh_token, \
+                grant_type = 'refresh_token')
+        r = _obj_hook(dict([p.split('=') for p in body.split('&')]))
+        r.expires_in = int(r.expires_in) + int(time.time())
+        return r
+
     def is_expires(self):
         return not self.access_token or time.time() > self.expires
 
